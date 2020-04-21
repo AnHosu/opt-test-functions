@@ -3,10 +3,20 @@ import numpy as np
 class OptTestFunction:
     def __init__(self, function=None, noise=False, noise_stddev=1.0, lower_limit=0, upper_limit=1):        
         self.functions = {
-            "Langermann": {
-                "function": self.langermann,
+            "Rastrigin": {
+                "function": self.rastrigin,
                 "function_lower": -5.12,
                 "function_upper": 5.12
+            },
+            "Michalewicz": {
+                "function": self.michalewicz,
+                "function_lower": 0,
+                "function_upper": np.pi
+            },
+            "Zakharov": {
+                "function": self.zakharov,
+                "function_lower": -5,
+                "function_upper": 10
             }
         }
         
@@ -34,7 +44,7 @@ class OptTestFunction:
                                 a=self.function["function_lower"], 
                                 b=self.function["function_upper"])
         #evaluate
-        y = self.function["function"](x)
+        y = self.function["function"](x_scaled)
         #add noise
         if self.noise:
             gauss = np.random.normal(0, self.noise_stddev, y.shape)
@@ -47,9 +57,26 @@ class OptTestFunction:
         return a + ((x - xmin)*(b - a))/(xmax - xmin)
     
     @staticmethod
-    def langermann(x):
+    def rastrigin(x):
         A = 10
         d = x.shape[0]
         xsq = np.power(x,2)
         wave = np.cos(2*np.pi*x)
         return A*d + np.sum(xsq + A*wave,axis=0)
+    
+    @staticmethod
+    def michalewicz(x):
+        m = 10
+        d = x.shape[0]
+        i = (np.arange(d) + 1)/np.pi
+        xsq = np.power(x,2)
+        s = (i*xsq.T).T
+        return -np.sum(np.sin(x)*(np.power(np.sin(s),2*m)), axis=0)
+
+    @staticmethod
+    def zakharov(x):
+        d = x.shape[0]
+        i = (np.arange(d) + 1)*0.5
+        xsq = np.power(x,2)
+        s = np.sum((i*x.T).T, axis=0)
+        return np.sum(xsq, axis=0) + np.power(s,2) + np.power(s,4)
