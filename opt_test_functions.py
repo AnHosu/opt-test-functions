@@ -1,7 +1,21 @@
 import numpy as np
 
 class OptTestFunction:
-    def __init__(self, function=None, noise=False, noise_stddev=1.0, lower_limit=0, upper_limit=1):        
+    '''
+    The OptTestFunction object is a simple interface for a test function.
+    :param function: The name of the function to use
+    :type function: str
+    :param noise: Whether to add gaussian noise to the function output
+    :type noise: bool
+    :param noise_stddev: Standard deviation of the added gaussian noise
+    :type noise_stddev: float
+    :param xmin: The lower bound on the cubic parameter space
+    :type xmin: float
+    :param xmax: The upper bound on the cubic parameter space
+    :type xmax: float
+    '''
+    def __init__(self, function=None, noise=False, noise_stddev=1.0, xmin=0, xmax=1):
+               
         self.functions = {
             "Rastrigin": {
                 "function": self.rastrigin,
@@ -17,30 +31,35 @@ class OptTestFunction:
                 "function": self.zakharov,
                 "function_lower": -5,
                 "function_upper": 10
+            },
+            "Styblinski": {
+                "function": self.styblinski_tang,
+                "function_lower": -5,
+                "function_upper": 5
             }
         }
         
-        self.config(function, noise, noise_stddev, lower_limit, upper_limit)
+        self.config(function, noise, noise_stddev, xmin, xmax)
         
-    def config(self, function=None, noise=False, noise_stddev=1.0, lower_limit=0, upper_limit=1):
+    def config(self, function=None, noise=False, noise_stddev=1.0, xmin=0, xmax=1):
         try:
             self.function = self.functions[function]
         except KeyError:
             raise AssertionError('Supported functions are ' + " ".join(list(self.functions.keys())) + '. Received "{0}"'.format(function))
         self.noise = noise
         try:
-            assert lower_limit < upper_limit
+            assert xmin < xmax
         except TypeError:
             print("Please provide numerical upper and lower limits.")
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
+        self.xmin = xmin
+        self.xmax = xmax
         self.noise_stddev = noise_stddev
     
     def get(self, x):
         #rescale
         x_scaled = self.rescale(x=x, 
-                                xmin=self.lower_limit, 
-                                xmax=self.upper_limit, 
+                                xmin=self.xmin, 
+                                xmax=self.xmax, 
                                 a=self.function["function_lower"], 
                                 b=self.function["function_upper"])
         #evaluate
@@ -51,7 +70,7 @@ class OptTestFunction:
             return y + gauss
         else:
             return y
-    
+
     @staticmethod
     def rescale(x, xmin, xmax, a, b):
         return a + ((x - xmin)*(b - a))/(xmax - xmin)
@@ -80,3 +99,7 @@ class OptTestFunction:
         xsq = np.power(x,2)
         s = np.sum((i*x.T).T, axis=0)
         return np.sum(xsq, axis=0) + np.power(s,2) + np.power(s,4)
+
+    @staticmethod
+    def styblinski_tang(x):
+        return 0.5*np.sum(np.power(x, 4) - 16*np.power(x, 2) + 5*x, axis=0)
